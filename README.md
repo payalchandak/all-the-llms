@@ -51,7 +51,7 @@ pip install litellm openrouter python-dotenv pydantic
 
 ### 2. Environment Variables
 
-Create a `.env` file in your project root with the following API keys:
+Create a `.env` file in your project root with at least one of the following API keys:
 
 #### Required (at least one)
 
@@ -69,26 +69,26 @@ Create a `.env` file in your project root with the following API keys:
 #### Optional (for Azure)
 
 - **`AZURE_API_KEY`**: Azure OpenAI API key
-- **`AZURE_API_BASE`**: Azure OpenAI endpoint URL (e.g., `https://hms-{resource}.openai.azure.com/` for HMS endpoints)
+- **`AZURE_API_BASE`**: Azure OpenAI endpoint URL 
 - **`AZURE_API_VERSION`**: Azure API version
-- **`AZURE_API_MODELS`**: Comma-separated list of available Azure models (e.g., `"gpt-5,gpt-4.1,gpt-4.1-mini"`)
+- **`AZURE_API_MODELS`**: Comma-separated list of deployed Azure models (e.g., `"gpt-5,gpt-4.1,gpt-4.1-mini"`)
 
 ### 3. Example `.env` File
 
 ```env
 # OpenRouter (required for routing judge and fallback models)
-OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_API_KEY=...
 
 # Direct provider access (optional - only use if you have free credits available 
 # that you prefer over OpenRouter. Prefer OpenRouter otherwise.)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
 
-# Azure HMS (optional - everything except API key)
-AZURE_API_BASE=https://hms-{resource}.openai.azure.com/
-AZURE_API_VERSION=2024-02-15-preview
-AZURE_API_MODELS=gpt-5,gpt-4.1,gpt-4.1-mini
-# AZURE_API_KEY=... (add your API key separately)
+# Azure (specified for Harvard Medical School)
+AZURE_API_KEY=...
+AZURE_API_BASE="https://azure-ai.hms.edu"
+AZURE_API_VERSION="2024-10-21"
+AZURE_API_MODELS="gpt-5,gpt-5-mini,gpt-4.1,gpt-4.1-mini,gpt-4.1-nano"
 ```
 
 ## Usage
