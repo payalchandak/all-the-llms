@@ -43,11 +43,32 @@ The routing is handled by a "routing judge" - an LLM that intelligently selects 
 
 ## Setup
 
-### 1. Install Dependencies
+### 1. Install the Package
+
+#### Option A: Install from Local Directory (Development)
 
 ```bash
-pip install litellm openrouter python-dotenv pydantic
+cd all-the-llms
+pip install -e .
 ```
+
+#### Option B: Install from Source
+
+```bash
+cd all-the-llms
+pip install .
+```
+
+#### Option C: Build and Install Distribution
+
+```bash
+cd all-the-llms
+pip install build
+python -m build
+pip install dist/all_the_llms-*.whl
+```
+
+The package will automatically install all required dependencies (`litellm`, `openrouter`, `python-dotenv`, `pydantic`).
 
 ### 2. Environment Variables
 
@@ -70,7 +91,15 @@ Only use if you have free credits you prefer over OpenRouter. Otherwise, prefer 
 - **`AZURE_API_VERSION`**: API version
 - **`AZURE_API_MODELS`**: Comma-separated list of deployed models (e.g., `"gpt-5,gpt-4.1,gpt-4.1-mini"`)
 
-### 3. Example `.env` File
+### 3. Import and Use
+
+After installation, you can import the package:
+
+```python
+from all_the_llms import LLM
+```
+
+### 4. Example `.env` File
 
 ```env
 # OpenRouter (required for routing judge and fallback models)
@@ -93,7 +122,7 @@ AZURE_API_MODELS="gpt-5,gpt-5-mini,gpt-4.1,gpt-4.1-mini,gpt-4.1-nano"
 ### Basic Example
 
 ```python
-from llm import LLM
+from all_the_llms import LLM
 
 # Initialize an LLM - routing happens automatically
 llm = LLM("gpt-4o")
@@ -113,7 +142,7 @@ print(response.choices[0].message.content)
 ### Advanced Example with Pydantic Structured Output
 
 ```python
-from llm import LLM
+from all_the_llms import LLM
 from pydantic import BaseModel
 from enum import Enum
 

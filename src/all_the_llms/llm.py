@@ -3,7 +3,7 @@ from __future__ import annotations
 from dotenv import load_dotenv
 import litellm
 from litellm import completion
-from model_router import ModelRouter
+from .model_router import ModelRouter
 
 # Load environment and enable json schema validation once
 load_dotenv()
