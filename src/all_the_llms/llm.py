@@ -1,28 +1,30 @@
 from __future__ import annotations
 
+import logging
 from dotenv import load_dotenv
 import litellm
 from litellm import completion
 from .model_router import ModelRouter
 
+logger = logging.getLogger(__name__)
+
 # Load environment and enable json schema validation once
 load_dotenv()
-litellm.enable_json_schema_validation = True
 
 class LLM:
     """Thin wrapper that resolves a model once and exposes the chosen id."""
 
     def __init__(self, model_name: str, routing_judge: str = "openrouter/openai/gpt-4o-mini"):
-        print(f"Routing model {model_name} to valid LLM...")
+        logger.info(f"Routing model {model_name} to valid LLM...")
         self._router = ModelRouter(routing_judge=routing_judge)
         self.model_name = self._router.resolve(model_name)
-        print(f"Resolved {model_name} to {self.model_name}")
-        print(f"Testing LLM at {self.model_name}")
+        logger.info(f"Resolved {model_name} to {self.model_name}")
+        logger.debug(f"Testing LLM at {self.model_name}")
         try:
             response = self.completion([{"role": "user", "content": "Hello, model! Can you reply with 'hi'?"},])
             if response.choices[0].finish_reason != "stop":
                 raise RuntimeError(f"The finish reason in the model response was not 'stop': {response}")
-            print(f"Successfully recieved response from {response.model}")
+            logger.debug(f"Successfully recieved response from {response.model}")
         except Exception as e:
             error_msg = str(e).split('\n')[0] if '\n' in str(e) else str(e)
             raise RuntimeError(f"Could not get a valid response from {self.model_name}. {error_msg}") from None

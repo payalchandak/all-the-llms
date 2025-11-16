@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from typing import List
@@ -9,6 +10,8 @@ import litellm
 from litellm import completion
 from openrouter import OpenRouter
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 class RouteDecision(BaseModel):
@@ -56,7 +59,7 @@ class ModelRouter:
             azure_models=azure_models,
             provider_models=provider_models,
         )
-        print(f"Selected route {decision.route} because {decision.reason.lower()}")
+        logger.info(f"Selected route {decision.route} because {decision.reason.lower()}")
 
         available = self._pick_available(decision.route, azure_models, provider_models, openrouter_models)
         if not available:
@@ -64,7 +67,7 @@ class ModelRouter:
             for r in ("provider", "openrouter", "azure"):
                 available = self._pick_available(r, azure_models, provider_models, openrouter_models)
                 if available:
-                    print(f"empty route {decision.route}, falling back to {r}")
+                    logger.warning(f"empty route {decision.route}, falling back to {r}")
                     decision.route = r
                     break
         if not available:
@@ -77,7 +80,7 @@ class ModelRouter:
             # Last resort: fuzzy match when the model replies with a near miss or alias
             close = difflib.get_close_matches(model, available, n=1, cutoff=0.6)
             if close:
-                print(f"resolver returned {model!r}, using closest available {close[0]!r}")
+                logger.debug(f"resolver returned {model!r}, using closest available {close[0]!r}")
                 model = close[0]
             else:
                 raise RuntimeError(f"Resolved model {model!r} not in available options: {available!r}")
@@ -95,7 +98,7 @@ class ModelRouter:
             provider_models_raw = litellm.utils.get_valid_models()
             provider_models = [self._normalize(m) for m in provider_models_raw if isinstance(m, str) and "openrouter" not in m.lower() and "azure" not in m.lower()]
         except Exception as e:  
-            print(f"Failed to load provider models from litellm: {e}")
+            logger.warning(f"Failed to load provider models from litellm: {e}")
             provider_models = []
 
         # OpenRouter models list
@@ -105,7 +108,7 @@ class ModelRouter:
                 client = OpenRouter(api_key=os.getenv("OPENROUTER_API_KEY"))
                 openrouter_models = [self._normalize(m.id) for m in client.models.list().data]
         except Exception as e:  # network
-            print(f"Failed to fetch OpenRouter models: {e}")
+            logger.warning(f"Failed to fetch OpenRouter models: {e}")
             openrouter_models = []
 
         # Deduplicate and drop empties
@@ -229,6 +232,6 @@ class ModelRouter:
                 if i == attempts - 1:
                     raise RuntimeError(f"LLM call failed after {attempts} attempts: {e}")
                 sleep = base_sleep * (2 ** i)
-                print(f"LLM call failed on attempt {i + 1}: {e}. Retrying in {sleep:.2f}s")
+                logger.warning(f"LLM call failed on attempt {i + 1}: {e}. Retrying in {sleep:.2f}s")
                 time.sleep(sleep)
 
