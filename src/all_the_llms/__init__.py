@@ -3,6 +3,6 @@
 from .llm import LLM
 from .model_router import ModelRouter
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __all__ = ["LLM", "ModelRouter"]
 
