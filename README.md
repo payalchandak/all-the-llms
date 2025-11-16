@@ -1,6 +1,16 @@
-# LLM Interface
+# all-the-llms
 
 A unified interface for querying Large Language Models (LLMs) across multiple providers using LiteLLM and OpenRouter. This package provides intelligent model routing that automatically selects the best provider for each model request.
+
+## Installation
+
+Install from PyPI:
+
+```bash
+pip install all-the-llms
+```
+
+The package is also available on [PyPI](https://pypi.org/project/all-the-llms/).
 
 ## What is LiteLLM?
 
@@ -41,36 +51,17 @@ The routing is handled by a "routing judge" - an LLM that intelligently selects 
 - Available API keys
 - Model availability in each catalog
 
-## Setup
+## Quick Start
 
-### 1. Install the Package
-
-#### Option A: Install from Local Directory (Development)
+### 1. Install
 
 ```bash
-cd all-the-llms
-pip install -e .
-```
-
-#### Option B: Install from Source
-
-```bash
-cd all-the-llms
-pip install .
-```
-
-#### Option C: Build and Install Distribution
-
-```bash
-cd all-the-llms
-pip install build
-python -m build
-pip install dist/all_the_llms-*.whl
+pip install all-the-llms
 ```
 
 The package will automatically install all required dependencies (`litellm`, `openrouter`, `python-dotenv`, `pydantic`).
 
-### 2. Environment Variables
+### 2. Set Up Environment Variables
 
 Create a `.env` file in your project root. At minimum, you need `OPENROUTER_API_KEY`:
 
@@ -91,12 +82,14 @@ Only use if you have free credits you prefer over OpenRouter. Otherwise, prefer 
 - **`AZURE_API_VERSION`**: API version
 - **`AZURE_API_MODELS`**: Comma-separated list of deployed models (e.g., `"gpt-5,gpt-4.1,gpt-4.1-mini"`)
 
-### 3. Import and Use
-
-After installation, you can import the package:
+### 3. Use
 
 ```python
 from all_the_llms import LLM
+
+llm = LLM("gpt-4o")
+response = llm.completion([{"role": "user", "content": "Hello!"}])
+print(response.choices[0].message.content)
 ```
 
 ### 4. Example `.env` File
@@ -183,6 +176,18 @@ By default, the system uses `openrouter/openai/gpt-4o-mini` as the routing judge
 ```python
 llm = LLM("gpt-5-2025-11-16", routing_judge="azure/gpt-4.1-mini")
 ```
+
+## Development
+
+For development, you can install the package in editable mode:
+
+```bash
+git clone https://github.com/payalchandak/all-the-llms.git
+cd all-the-llms
+pip install -e .
+```
+
+This allows you to make changes to the source code that take effect immediately without reinstalling.
 
 ## What the Code Does
 
