@@ -153,10 +153,9 @@ class ModelRouter:
         )
 
         content = (resp.choices[0].message.content or "").strip()
-        try:
-            return RouteDecision.model_validate_json(content)
-        except Exception:
-            return RouteDecision(route="openrouter", reason="Fallback due to invalid judge response")
+        decision = RouteDecision.model_validate_json(content)
+        logger.info(f"Selected route {decision.route} because {decision.reason.lower()}")
+        return decision
 
     def _resolve_with_llm(self, requested_model: str, decision: RouteDecision, available_models: List[str]) -> str:
         """Ask a small model to map the requested model to one of the available models."""
