@@ -4,7 +4,7 @@ import logging
 from .llm import LLM
 from .model_router import ModelRouter
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 __all__ = ["LLM", "ModelRouter"]
 
 # Configure package logger
