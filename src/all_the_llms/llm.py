@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import logging
+from typing import TypeVar
+
+import instructor
 from dotenv import load_dotenv
-import litellm
 from litellm import completion
+from pydantic import BaseModel
+
 from .model_router import ModelRouter
+
+ResponseModelT = TypeVar("ResponseModelT", bound=BaseModel)
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +24,7 @@ class LLM:
         logger.info(f"Routing model {model_name} to valid LLM...")
         self._router = ModelRouter(routing_judge=routing_judge)
         self.model_name = self._router.resolve(model_name)
+        self._instructor_client = instructor.from_litellm(completion)
         logger.info(f"Resolved {model_name} to {self.model_name}")
         logger.debug(f"Testing LLM at {self.model_name}")
         try:
@@ -116,13 +123,49 @@ class LLM:
         )
         return response
 
-    def validate_response(self, response: dict):
-        # check finish reason is valid 
-        pass
+    def structured_completion(
+        self,
+        messages: list[dict],
+        response_model: type[ResponseModelT],
+        max_retries: int = 3,
+        **kwargs,
+    ) -> ResponseModelT:
+        """Generate a structured completion that returns a validated Pydantic instance.
 
-    def get_response_content(self, response: dict):
-        return response['choices'][0]['message']['content']
+        This method uses the instructor library with litellm to automatically
+        validate LLM outputs into Pydantic models. Validation errors are fed back
+        to the model to increase the chance of a successful response on retry.
 
-    def parse_response_to_structured_output(self, response: dict, schema: dict):
-        # use free model to convert free text response to structured output
-        pass
+        Args:
+            messages: List of message dictionaries with 'role' and 'content' keys.
+                Example: [{"role": "user", "content": "Extract the user info"}]
+            response_model: A Pydantic BaseModel class that defines the expected
+                structure of the response. The LLM output will be validated against
+                this schema.
+            max_retries: Number of retries if validation fails. Defaults to 3.
+            **kwargs: Additional parameters passed to the underlying completion call.
+                See the completion() method for available options.
+
+        Returns:
+            An instance of the provided response_model class, fully validated.
+
+        Example:
+            >>> from pydantic import BaseModel
+            >>> class User(BaseModel):
+            ...     name: str
+            ...     age: int
+            >>> llm = LLM("gpt-4o")
+            >>> user = llm.structured_completion(
+            ...     messages=[{"role": "user", "content": "Jason is 25 years old"}],
+            ...     response_model=User
+            ... )
+            >>> print(user.name, user.age)
+            Jason 25
+        """
+        return self._instructor_client.chat.completions.create(
+            model=self.model_name,
+            response_model=response_model,
+            messages=messages,
+            max_retries=max_retries,
+            **kwargs,
+        )
