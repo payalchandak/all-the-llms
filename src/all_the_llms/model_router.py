@@ -135,7 +135,7 @@ class ModelRouter:
             "You are a routing judge. Choose the single best route for a model request."
             "Rules:"
             "1. If the requested model semantically matches one of azure_models_available then you must prefer azure. Allow date style suffix matches (e.g. 'gpt-5-2025-11-16' matches 'gpt-5'), but do not allow cross version matches (e.g. 'gpt-4o' does not match 'gpt-4.1')."
-            "2. Else if requested model matches a provider for which a direct API key is available then you must choose provider."
+            "2. Else if requested model matches a provider for which a direct API key is available then you must choose provider. Its possible the provider model does not mention the provider (e.g. 'gpt-5.2' instead of 'openai/gpt-5.2')."
             "You can verify provider availability using provider_models_available."
             "3. Else choose openrouter. Default choice should be openrouter."
             "Return strict JSON with keys route and reason. Route must be one of azure, provider, openrouter. No extra text."
