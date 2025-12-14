@@ -12,6 +12,43 @@ pip install all-the-llms
 
 The package is also available on [PyPI](https://pypi.org/project/all-the-llms/).
 
+## Environment Variables Reference
+
+### Required
+
+- **`OPENROUTER_API_KEY`**: Get your key from [OpenRouter](https://openrouter.ai/keys)
+
+### Optional (Direct Provider Access)
+
+Only use if you have free credits you prefer over OpenRouter. Otherwise, prefer OpenRouter.
+
+- **`OPENAI_API_KEY`**, **`ANTHROPIC_API_KEY`**, **`GOOGLE_API_KEY`**, or any `{PROVIDER}_API_KEY`
+
+### Optional (Azure)
+
+- **`AZURE_API_KEY`**: Azure OpenAI API key
+- **`AZURE_API_BASE`**: Endpoint URL
+- **`AZURE_API_VERSION`**: API version
+- **`AZURE_API_MODELS`**: Comma-separated list of deployed models (e.g., `"gpt-5,gpt-4.1,gpt-4.1-mini"`)
+
+### Example `.env` File
+
+```env
+# OpenRouter (required for routing judge and fallback models)
+OPENROUTER_API_KEY=...
+
+# Direct provider access (optional - only use if you have free credits available 
+# that you prefer over OpenRouter. Prefer OpenRouter otherwise.)
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
+
+# Azure (specified for Harvard Medical School)
+AZURE_API_KEY=...
+AZURE_API_BASE="https://azure-ai.hms.edu"
+AZURE_API_VERSION="2024-10-21"
+AZURE_API_MODELS="gpt-5,gpt-5-mini,gpt-4.1,gpt-4.1-mini,gpt-4.1-nano"
+```
+
 ## What is LiteLLM?
 
 [LiteLLM](https://github.com/BerriAI/litellm) is a Python library that provides a unified interface to call multiple LLM APIs with a consistent OpenAI-like API. It supports 100+ LLM providers including:
@@ -59,63 +96,48 @@ The routing is handled by a "routing judge" - an LLM that intelligently selects 
 pip install all-the-llms
 ```
 
-The package will automatically install all required dependencies (`litellm`, `openrouter`, `python-dotenv`, `pydantic`).
+### 2. Get Your API Key
 
-### 2. Set Up Environment Variables
+Get a free API key from [OpenRouter](https://openrouter.ai/keys) (free tier available).
 
-Create a `.env` file in your project root. At minimum, you need `OPENROUTER_API_KEY`:
+### 3. Create `.env` File
 
-#### Required
+Create a `.env` file in your project root:
 
-- **`OPENROUTER_API_KEY`**: Get your key from [OpenRouter](https://openrouter.ai/keys)
+```env
+OPENROUTER_API_KEY=your_key_here
+```
 
-#### Optional (Direct Provider Access)
+That's it! You can optionally add direct provider API keys if you have them:
 
-Only use if you have free credits you prefer over OpenRouter. Otherwise, prefer OpenRouter.
+```env
+OPENROUTER_API_KEY=your_key_here
+OPENAI_API_KEY=optional_direct_key
+ANTHROPIC_API_KEY=optional_direct_key
+```
 
-- **`OPENAI_API_KEY`**, **`ANTHROPIC_API_KEY`**, **`GOOGLE_API_KEY`**, or any `{PROVIDER}_API_KEY`
-
-#### Optional (Azure)
-
-- **`AZURE_API_KEY`**: Azure OpenAI API key
-- **`AZURE_API_BASE`**: Endpoint URL
-- **`AZURE_API_VERSION`**: API version
-- **`AZURE_API_MODELS`**: Comma-separated list of deployed models (e.g., `"gpt-5,gpt-4.1,gpt-4.1-mini"`)
-
-### 3. Use
+### 4. Your First Request
 
 ```python
 from all_the_llms import LLM
+from dotenv import load_dotenv
+
+load_dotenv()
 
 llm = LLM("gpt-4o")
 response = llm.completion([{"role": "user", "content": "Hello!"}])
 print(response.choices[0].message.content)
 ```
 
-### 4. Example `.env` File
+## Usage Examples
 
-```env
-# OpenRouter (required for routing judge and fallback models)
-OPENROUTER_API_KEY=...
-
-# Direct provider access (optional - only use if you have free credits available 
-# that you prefer over OpenRouter. Prefer OpenRouter otherwise.)
-OPENAI_API_KEY=...
-ANTHROPIC_API_KEY=...
-
-# Azure (specified for Harvard Medical School)
-AZURE_API_KEY=...
-AZURE_API_BASE="https://azure-ai.hms.edu"
-AZURE_API_VERSION="2024-10-21"
-AZURE_API_MODELS="gpt-5,gpt-5-mini,gpt-4.1,gpt-4.1-mini,gpt-4.1-nano"
-```
-
-## Usage
-
-### Basic Example
+### Basic Text Completion
 
 ```python
 from all_the_llms import LLM
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Initialize an LLM - routing happens automatically
 llm = LLM("gpt-4o")
@@ -130,44 +152,39 @@ response = llm.completion(
 print(response.choices[0].message.content)
 ```
 
-**Note**: All LiteLLM features (streaming, tools, structured output, etc.) are supported through the `completion()` method's `**kwargs`. See the [LiteLLM documentation](https://docs.litellm.ai/) for a complete list of available parameters.
+**Note**: All LiteLLM features (streaming, tools, etc.) are supported through the `completion()` method's `**kwargs`. See the [LiteLLM documentation](https://docs.litellm.ai/) for a complete list of available parameters.
 
-### Advanced Example with Pydantic Structured Output
+### Structured Output with Pydantic
+
+Get validated, structured responses using Pydantic models. This uses the [instructor](https://github.com/jxnl/instructor) library under the hood, which automatically handles validation errors and retries to ensure you get properly formatted responses.
 
 ```python
-from all_the_llms import LLM
 from pydantic import BaseModel
-from enum import Enum
+from all_the_llms import LLM
+from dotenv import load_dotenv
 
-# Define a Pydantic model for structured output
-class CoffeeQuality(str, Enum):
-    excellent = "excellent"
-    terrible = "terrible"
-    meh = "meh"
+load_dotenv()
 
-class CoffeeReview(BaseModel):
-    quality: CoffeeQuality
-    caffeine_level: int  # 1-10 scale
-    complaints: list[str]
-    verdict: str
+class User(BaseModel):
+    name: str
+    age: int
 
-llm = LLM("claude-sonnet-4.5")
-
-# Make a completion request with structured output using response_format
-response = llm.completion(
-    messages=[{"role": "user", "content": "Review this coffee: 'It tastes like someone dissolved a tire in hot water and called it a day.'"}],
-    response_format=CoffeeReview,
-    temperature=0.3,
+llm = LLM("gpt-4o")
+user = llm.structured_completion(
+    messages=[{"role": "user", "content": "Jason is 25 years old"}],
+    response_model=User
 )
-
-# Extract and validate the structured response
-content = response.choices[0].message.content
-review = CoffeeReview.model_validate_json(content)
-print(f"Quality: {review.quality}")
-print(f"Caffeine Level: {review.caffeine_level}/10")
-print(f"Complaints: {', '.join(review.complaints)}")
-print(f"Verdict: {review.verdict}")
+print(user.name, user.age)
 ```
+
+**How it works**: The `structured_completion()` method uses [instructor](https://github.com/jxnl/instructor) to automatically:
+- Convert your Pydantic model to a JSON schema
+- Send it to the LLM with instructions to return valid JSON
+- Validate the response against your model
+- Retry up to 3 times if validation fails, feeding errors back to the model
+- Return a fully validated Pydantic instance
+
+This ensures you always get properly structured, type-safe responses without manual parsing or validation.
 
 ### Custom Routing Judge
 
