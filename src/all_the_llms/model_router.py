@@ -48,7 +48,7 @@ class ModelRouter:
         azure_models, provider_models, openrouter_models = self._load_catalogs()
 
         # Fast path exact hits across catalogs, honoring priority: azure then provider then openrouter
-        exact = self._find_exact(requested_model, azure_models, provider_models, openrouter_models)
+        exact = self._find_exact(requested_model, azure_models, provider_models)
         if exact:
             route, model = exact
             return self._prefix(route, model)
@@ -204,14 +204,12 @@ class ModelRouter:
         return openrouter
 
     @staticmethod
-    def _find_exact(req: str, azure: List[str], provider: List[str], openrouter: List[str]):
+    def _find_exact(req: str, azure: List[str], provider: List[str]):
         # Exact match by normalized model
         if req in azure:
             return ("azure", req)
         if req in provider:
             return ("provider", req)
-        if req in openrouter:
-            return ("openrouter", req)
         return None
 
     @staticmethod
